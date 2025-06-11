@@ -1,4 +1,4 @@
-import { Container, Typography } from '@mui/material';
+import { Container, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 
 interface LayoutProps {
@@ -7,9 +7,9 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => (
   <Container maxWidth="sm" sx={{ py: 4 }}>
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h5" gutterBottom>
       Выравнивание последовательностей
     </Typography>
-    {children}
+    <Stack spacing={4}>{children}</Stack>
   </Container>
 );

@@ -18,7 +18,7 @@ interface AlignmentFormProps {
 /**
  * Представляет компонент формы ввода выравнивания аминокислотных последовательностей.
  */
-export const AlignmentForm = ({ onSubmit }: AlignmentFormProps) => {
+export function AlignmentForm({ onSubmit }: AlignmentFormProps) {
   const {
     control,
     handleSubmit,
@@ -82,4 +82,4 @@ export const AlignmentForm = ({ onSubmit }: AlignmentFormProps) => {
       </Stack>
     </form>
   );
-};
+}
