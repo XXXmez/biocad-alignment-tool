@@ -65,14 +65,38 @@ export function AlignmentForm({ onSubmit }: AlignmentFormProps) {
           control={control}
           name={'sequence1'}
           render={({ field }) => (
-            <TextField label="Последовательность 1" fullWidth autoComplete="off" {...field} />
+            <TextField
+              label="Последовательность 1"
+              fullWidth
+              autoComplete="off"
+              {...field}
+              onChange={handleUppercaseInputChange(field.onChange)}
+              onBeforeInput={(e) => {
+                const char = e.data?.toUpperCase();
+                if (char && !AMINO_ACIDS_REGEX.test(char)) {
+                  e.preventDefault();
+                }
+              }}
+            />
           )}
         />
         <Controller
           control={control}
           name={'sequence2'}
           render={({ field }) => (
-            <TextField label="Последовательность 2" fullWidth autoComplete="off" {...field} />
+            <TextField
+              label="Последовательность 2"
+              fullWidth
+              autoComplete="off"
+              {...field}
+              onChange={handleUppercaseInputChange(field.onChange)}
+              onBeforeInput={(e) => {
+                const char = e.data?.toUpperCase();
+                if (char && !AMINO_ACIDS_REGEX.test(char)) {
+                  e.preventDefault();
+                }
+              }}
+            />
           )}
         />
         <Typography color="error">{errorMessage}</Typography>
@@ -82,4 +106,18 @@ export function AlignmentForm({ onSubmit }: AlignmentFormProps) {
       </Stack>
     </form>
   );
+}
+
+function handleUppercaseInputChange(
+  onChange: (value: string) => void,
+): React.ChangeEventHandler<HTMLInputElement> {
+  return (e) => {
+    const input = e.target;
+    const start = input.selectionStart ?? input.value.length;
+    const upper = input.value.toUpperCase();
+    onChange(upper);
+    requestAnimationFrame(() => {
+      input.setSelectionRange(start, start);
+    });
+  };
 }
