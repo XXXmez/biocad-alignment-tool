@@ -1,33 +1,82 @@
-import { TextField, Button, Stack } from '@mui/material';
+import { TextField, Button, Stack, Typography } from '@mui/material';
+import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import type { AlignmentFormData } from '../../types/alignment-form-data.ts';
+import { AMINO_ACIDS_REGEX } from '../../utils/amino-acids-regex.ts';
 
+/**
+ * Представляет пропсы компонента формы ввода выравнивания аминокислотных последовательностей.
+ */
 interface AlignmentFormProps {
+  /**
+   * Возвращает делегат принимающий данные аминокислотных последовательностей.
+   */
   readonly onSubmit: (data: AlignmentFormData) => void;
 }
 
+/**
+ * Представляет компонент формы ввода выравнивания аминокислотных последовательностей.
+ */
 export const AlignmentForm = ({ onSubmit }: AlignmentFormProps) => {
   const {
     control,
     handleSubmit,
-    formState: { isValid },
-  } = useForm<AlignmentFormData>({ mode: 'all' });
+    watch,
+    formState: { touchedFields },
+  } = useForm<AlignmentFormData>({ mode: 'onChange' });
+
+  const sequence1 = watch('sequence1');
+  const sequence2 = watch('sequence2');
+
+  const errorMessage = useMemo(() => {
+    const touched = touchedFields.sequence1 || touchedFields.sequence2;
+
+    if (!touched) {
+      return '';
+    }
+
+    if (!sequence1 || !sequence2) {
+      return 'Оба поля обязательны для заполнения';
+    }
+
+    if (!AMINO_ACIDS_REGEX.test(sequence1) || !AMINO_ACIDS_REGEX.test(sequence2)) {
+      return 'Последовательности могут содержать только обозначения аминокислот (A, R, N, D, C, E, Q, G, H, I, L, K, M, F, P, S, T, W, Y, V) и символ "-"';
+    }
+
+    if (sequence1.length !== sequence2.length) {
+      return 'Последовательности должны быть одинаковой длины';
+    }
+
+    return '';
+  }, [touchedFields, sequence1, sequence2]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!errorMessage && sequence1 && sequence2) {
+          handleSubmit(onSubmit)();
+        }
+      }}
+    >
       <Stack spacing={2}>
         <Controller
           control={control}
           name={'sequence1'}
-          render={() => <TextField label="Последовательность 1" fullWidth />}
+          render={({ field }) => (
+            <TextField label="Последовательность 1" fullWidth autoComplete="off" {...field} />
+          )}
         />
         <Controller
           control={control}
-          name={'sequence1'}
-          render={() => <TextField label="Последовательность 2" fullWidth />}
+          name={'sequence2'}
+          render={({ field }) => (
+            <TextField label="Последовательность 2" fullWidth autoComplete="off" {...field} />
+          )}
         />
-        <Button type="submit" variant="contained" disabled={!isValid}>
+        <Typography color="error">{errorMessage}</Typography>
+        <Button type="submit" variant="contained">
           Выравнять
         </Button>
       </Stack>
