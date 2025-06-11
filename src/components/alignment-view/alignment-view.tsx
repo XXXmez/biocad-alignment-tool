@@ -1,111 +1,107 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 import type { AlignmentFormData } from '../../types/alignment-form-data.ts';
-import { AMINO_ACID_COLORS } from '../../utils/amino-acid-colors';
-
-import './alignment-view.css';
+import type { CharInfo, LinePair } from '../../types/alignment-line.ts';
+import { AMINO_ACID_COLORS } from '../../utils/amino-acid-colors.ts';
+import { measureTextWidth } from '../../utils/measure-text-width.ts';
 
 /**
- * Представляет пропсы компонента визуализации выравнивания двух аминокислотных последовательностей.
+ * Представляет пропсы компонента отображения выравнивания аминокислотных последовательностей.
  */
 type AlignmentViewProps = AlignmentFormData;
 
 /**
- * Представляет компонент визуализации выравнивания двух аминокислотных последовательностей.
+ * Представляет компонент отображения выравнивания аминокислотных последовательностей.
  */
-export const AlignmentView: React.FC<AlignmentViewProps> = ({ sequence1, sequence2 }) => {
+export function AlignmentView(props: AlignmentViewProps) {
+  const { sequence1, sequence2 } = props;
+
   const containerRef = useRef<HTMLDivElement>(null);
-  const [blockSize, setBlockSize] = useState(50);
+  const [lines, setLines] = useState<LinePair[]>([]);
 
   useEffect(() => {
-    const updateBlockSize = () => {
-      if (containerRef.current) {
-        // создаём временный span
-        const span = document.createElement('span');
-        span.textContent = 'A';
-        span.style.visibility = 'hidden';
-        span.style.fontFamily = 'monospace';
-        span.style.fontSize = 'inherit';
-        span.style.padding = '0 2px';
-        span.style.display = 'inline-block';
-        containerRef.current.appendChild(span);
+    const buildLines = (width: number) => {
+      const seq1 = sequence1.toUpperCase();
+      const seq2 = sequence2.toUpperCase();
 
-        const charWidth = span.getBoundingClientRect().width;
-        containerRef.current.removeChild(span);
+      const newLines: LinePair[] = [];
 
-        const containerWidth = containerRef.current.getBoundingClientRect().width;
-        const calculatedBlockSize = Math.floor(containerWidth / charWidth);
-        setBlockSize(calculatedBlockSize || 1);
+      let currTop: CharInfo[] = [];
+      let currBottom: CharInfo[] = [];
+      let currWidth = 0;
+
+      for (let i = 0; i < seq1.length; i++) {
+        const c1 = seq1[i],
+          c2 = seq2[i];
+        const w1 = measureTextWidth(c1);
+        const w2 = measureTextWidth(c2);
+        const w = Math.max(w1, w2);
+        if (currWidth + w > width && currTop.length > 0) {
+          newLines.push({ top: currTop, bottom: currBottom });
+          currTop = [];
+          currBottom = [];
+          currWidth = 0;
+        }
+        currTop.push({ char: c1, width: w });
+        currBottom.push({ char: c2, width: w });
+        currWidth += w;
       }
+
+      if (currTop.length) {
+        newLines.push({ top: currTop, bottom: currBottom });
+      }
+
+      setLines(newLines);
     };
 
-    updateBlockSize();
+    const obs = new ResizeObserver((entries) => {
+      if (entries[0] && containerRef.current) {
+        buildLines(entries[0].contentRect.width);
+      }
+    });
 
-    const resizeObserver = new ResizeObserver(updateBlockSize);
     if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
+      obs.observe(containerRef.current);
+      buildLines(containerRef.current.clientWidth);
     }
 
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-  const blocksCount = Math.ceil(sequence1.length / blockSize);
-
-  const blocks = Array.from({ length: blocksCount }, (_, i) => {
-    const start = i * blockSize;
-    const end = start + blockSize;
-    return {
-      top: sequence1.slice(start, end),
-      bottom: sequence2.slice(start, end),
-    };
-  });
+    return () => obs.disconnect();
+  }, [sequence1, sequence2]);
 
   return (
-    <div
-      ref={containerRef}
-      className={'alignment-view'}
-      style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-    >
-      {blocks.map(({ top, bottom }, index) => (
-        <div key={index} style={{ marginBottom: '0.5rem' }}>
+    <div ref={containerRef} style={{ width: '100%' }}>
+      {lines.map((line, idx) => (
+        <div key={idx} style={{ lineHeight: '1em' }}>
           <div>
-            {top.split('').map((char, i) => (
+            {line.top.map((info, j) => (
               <span
-                key={i}
+                key={j}
                 style={{
-                  backgroundColor: AMINO_ACID_COLORS[char.toUpperCase()] || 'transparent',
-                  padding: '0 2px',
                   display: 'inline-block',
-                  minWidth: '12px',
-                  textAlign: 'center',
-                  userSelect: 'text',
+                  width: info.width + 'px',
+                  backgroundColor: AMINO_ACID_COLORS[info.char],
+                  fontFamily: 'monospace',
                 }}
               >
-                {char}
+                {info.char}
               </span>
             ))}
           </div>
           <div>
-            {bottom.split('').map((char, i) => {
-              const topChar = top[i];
-              const isDifferent = char.toUpperCase() !== topChar.toUpperCase();
+            {line.bottom.map((info, j) => {
+              const backgroundColor =
+                info.char === line.top[j].char ? 'transparent' : AMINO_ACID_COLORS[info.char];
               return (
                 <span
-                  key={i}
+                  key={j}
                   style={{
-                    backgroundColor: isDifferent
-                      ? AMINO_ACID_COLORS[char.toUpperCase()] || 'transparent'
-                      : 'transparent',
-                    padding: '0 2px',
                     display: 'inline-block',
-                    minWidth: '12px',
-                    textAlign: 'center',
-                    userSelect: 'text',
+                    width: info.width + 'px',
+                    backgroundColor,
+                    fontFamily: 'monospace',
                   }}
                 >
-                  {char}
+                  {info.char}
                 </span>
               );
             })}
@@ -114,4 +110,4 @@ export const AlignmentView: React.FC<AlignmentViewProps> = ({ sequence1, sequenc
       ))}
     </div>
   );
-};
+}
