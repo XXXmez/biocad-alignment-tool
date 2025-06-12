@@ -11,7 +11,7 @@ export function measureTextWidth(char: string): number {
     return 10;
   }
 
-  context.font = '16px monospace';
+  context.font = '16px sans-serif';
 
   return context.measureText(char).width;
 }
