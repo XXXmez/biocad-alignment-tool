@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import type { AlignmentFormData } from '../../types/alignment-form-data.ts';
 import { AMINO_ACIDS_REGEX } from '../../utils/amino-acids-regex.ts';
+import { hasValue, hasValueNotEmpty } from '../../utils/has-value.ts';
 
 /**
  * Представляет пропсы компонента формы ввода выравнивания аминокислотных последовательностей.
@@ -36,7 +37,7 @@ export function AlignmentForm({ onSubmit }: AlignmentFormProps) {
       return '';
     }
 
-    if (!sequence1 || !sequence2) {
+    if (!hasValueNotEmpty(sequence1) || !hasValueNotEmpty(sequence2)) {
       return 'Оба поля обязательны для заполнения';
     }
 
@@ -73,7 +74,7 @@ export function AlignmentForm({ onSubmit }: AlignmentFormProps) {
               onChange={handleUppercaseInputChange(field.onChange)}
               onBeforeInput={(e) => {
                 const char = e.data?.toUpperCase();
-                if (char && !AMINO_ACIDS_REGEX.test(char)) {
+                if (hasValue(char) && !AMINO_ACIDS_REGEX.test(char)) {
                   e.preventDefault();
                 }
               }}
@@ -92,14 +93,16 @@ export function AlignmentForm({ onSubmit }: AlignmentFormProps) {
               onChange={handleUppercaseInputChange(field.onChange)}
               onBeforeInput={(e) => {
                 const char = e.data?.toUpperCase();
-                if (char && !AMINO_ACIDS_REGEX.test(char)) {
+                if (hasValue(char) && !AMINO_ACIDS_REGEX.test(char)) {
                   e.preventDefault();
                 }
               }}
             />
           )}
         />
-        <Typography color="error">{errorMessage}</Typography>
+        <Typography color="error" style={{ minHeight: '1.5em' }}>
+          {errorMessage}
+        </Typography>
         <Button type="submit" variant="contained">
           Выравнять
         </Button>

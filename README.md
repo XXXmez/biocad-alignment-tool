@@ -16,3 +16,4 @@
 git clone https://github.com/xxxmez/biocad-alignment-tool.git
 cd biocad-alignment-tool
 npm install
+```

@@ -6,6 +6,9 @@ import { AlignmentView } from './components/alignment-view/alignment-view.tsx';
 import { Layout } from './components/layout/layout.tsx';
 import type { AlignmentFormData } from './types/alignment-form-data.ts';
 
+/**
+ * Представляет рутовый компонент приложения.
+ */
 function App() {
   const [state, setState] = useState<AlignmentFormData | null>(null);
   const [copied, setCopied] = useState(false);

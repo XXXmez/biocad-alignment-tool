@@ -3,6 +3,7 @@ import { useRef, useEffect, useState } from 'react';
 import type { AlignmentFormData } from '../../types/alignment-form-data.ts';
 import type { CharInfo, LinePair } from '../../types/alignment-line.ts';
 import { AMINO_ACID_COLORS } from '../../utils/amino-acid-colors.ts';
+import { hasValue } from '../../utils/has-value.ts';
 import { measureTextWidth } from '../../utils/measure-text-width.ts';
 
 import './alignment-view.css';
@@ -62,12 +63,12 @@ export function AlignmentView(props: AlignmentViewProps) {
     };
 
     const obs = new ResizeObserver((entries) => {
-      if (entries[0] && containerRef.current) {
+      if (entries[0] && hasValue(containerRef.current)) {
         buildLines(entries[0].contentRect.width);
       }
     });
 
-    if (containerRef.current) {
+    if (hasValue(containerRef.current)) {
       obs.observe(containerRef.current);
       buildLines(containerRef.current.clientWidth);
     }
